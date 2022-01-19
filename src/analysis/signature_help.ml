@@ -28,7 +28,7 @@ let extract_ident (exp_desc : Typedtree.expression_desc) =
     | Lapply (p1, p2) -> fprintf ppf "%a(%a)" longident p1 longident p2
   in
   match exp_desc with
-  | Texp_ident (_, { txt = li; _ }, _) ->
+  | Texp_ident (_, { txt = li; _ }, _, _) ->
     let ppf, to_string = Format.to_string () in
     longident ppf li;
     Some (to_string ())
@@ -85,11 +85,11 @@ let separate_function_signature ~args (e : Typedtree.expression) =
   let ppf = Format.formatter_of_buffer buffer in
   let rec separate ?(i=0) ?(parameters=[]) args ty =
     match (args, ty) with
-    | (l, arg)::args, { Types.desc = Tarrow (label, ty1, ty2, _) } ->
+    | (l, arg)::args, { Types.desc = Tarrow ((label, _, _), ty1, ty2, _) } ->
       let parameter = print_parameter_offset ppf buffer e.exp_env label ty1 ?arg in
       separate args ty2 ~i:(succ i) ~parameters:(parameter::parameters)
 
-    | [], { Types.desc = Tarrow (label, ty1, ty2, _) } ->
+    | [], { Types.desc = Tarrow ((label, _, _), ty1, ty2, _) } ->
       let parameter = print_parameter_offset ppf buffer e.exp_env label ty1 in
       separate args ty2 ~i:(succ i) ~parameters:(parameter::parameters)
 
@@ -139,7 +139,17 @@ let active_parameter_by_prefix ~prefix params =
 let application_signature ~prefix = function
   (* provide signature information for applied functions *)
   | (_, Expression arg) :: (_, Expression { exp_desc =
-      Texp_apply ({ exp_type = { desc = Tarrow _; _ }; _ } as e, args); _}) :: _ ->
+      Texp_apply ({ exp_type = { desc = Tarrow _; _ }; _ } as e, args, _); _}) :: _ ->
+    let args =
+      List.map (fun (arg_label, apply_arg) ->
+          let expr_opt =
+            match apply_arg with
+            | Typedtree.Arg expr -> Some expr
+            | Typedtree.Omitted _ -> None
+          in
+          arg_label, expr_opt)
+        args
+    in
     let result = separate_function_signature e ~args in
     let active_param = active_parameter_by_arg ~arg result.parameters in
     let active_param = match active_param with
