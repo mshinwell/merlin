@@ -381,6 +381,12 @@ let ocaml_ignored_flags = [
   "-verbose"; "-where";
 
   (* flambda-backend specific *)
+  "-gupstream-dwarf";
+  "-gno-upstream-dwarf";
+  "-gstartup";
+  "-gno-startup";
+  "-dasm-comments";
+  "-dno-asm-comments";
   "-ocamlcfg";
   "-no-ocamlcfg";
   "-flambda2-backend-cse-at-toplevel";
@@ -425,6 +431,7 @@ let ocaml_ignored_parametrized_flags = [
   "-error-style";
 
   (* flambda-backend specific *)
+  "-dump-inlining-paths";
   "-reorder-blocks-random";
   "-heap-reduction-threshold";
   "-flambda2-cse-depth";
